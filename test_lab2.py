@@ -15,14 +15,14 @@ def test_add():
 
 def test_div():
     print("\n---Testing div---")
-    print(f"1101, 101: {div('1101', '101')} = (11, 10)")
-    print(f"101, 11: {div('101', '11')} = (11, 0)")
+    # print(f"1101, 101: {div('1101', '101')} = (11, 10)")
+    print(f"1101, 11: {div('1101', '11')} = (11, 0)")
 
 def test_gcd():
     print("\n---Testing gcd---")
     print(f"100001, 1111: {polynome_gcd('100001', '1111')} = 11")
 
-test_mult()
-test_add()
+# test_mult()
+# test_add()
 test_div()
-test_gcd()
+# test_gcd()

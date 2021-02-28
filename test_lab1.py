@@ -41,13 +41,14 @@ def test_comparison():
 
 def test_primitive_roots():
     print("\n---Testing primitive roots---")
+    print(f'7: {primitime_roots(7)}')
     print(f'19: {primitime_roots(19)} = [13, 14, 15, 3, 10]')
     print(f'23: {primitime_roots(23)} = [10, 20, 17, 11, 21, 19, 15, 7, 14]')
 
-test_gcd()
-test_gcd_extended()
-test_euler()
-test_relative_primes()
-test_diophantine()
-test_comparison()
+# test_gcd()
+# test_gcd_extended()
+# test_euler()
+# test_relative_primes()
+# test_diophantine()
+# test_comparison()
 test_primitive_roots()

@@ -39,7 +39,7 @@ def div(a, b):
         m, r = div_core(r, b)
         multiplier_bites.append(m)
 
-        if m == "1":
+        if m == "1" or m == "0":
             rest = r
             break
         if r == "0":
