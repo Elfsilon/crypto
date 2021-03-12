@@ -119,6 +119,11 @@ print(f"НОД(111010, 101110) = {prime_test.original_test(51)}")
 
 # print()
 # print(f"@--Factorization---@")
+print(f"(Origin), n=483: {factorization.original(483)}")
+print(f"(Origin), n=1207: {factorization.original(1207)}")
+print(f"(Origin), n=561: {factorization.original(561)}")
+print(f"(Origin), n=1219: {factorization.original(1219)}")
+
 # print(f"(P-1), n=483: {factorization.pollard_p_minus_one(483)}")
 # print(f"(P-1), n=1207: {factorization.pollard_p_minus_one(1207)}")
 # print(f"(P-1), n=561: {factorization.pollard_p_minus_one(561)}")

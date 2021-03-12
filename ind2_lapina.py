@@ -1,14 +1,14 @@
-from functools import reduce
-import operator
 import math
 import random
 import utils
-
+import operator
+from functools import reduce
 
 def original(n):
     for i in range(2, math.isqrt(n)):
         if n % i == 0:
             return i, int(n/i)
+    return n, 1
 
 
 # Метод факторизации Полларда p-1
@@ -100,3 +100,13 @@ def fermat(n):
         k += 1
         x += 1
         l = (x ** 2) - n
+
+
+test_numbers = [561, 1207, 983, 65623]
+for n in test_numbers:
+    print(f"{n}:")
+    print("Original:", original(n))
+    print("P-1:", pollard_p_minus_one(n))
+    print("PO(Rho):", pollard_po(n))
+    print("Fermat:", fermat(n))
+    print()
