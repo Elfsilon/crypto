@@ -1,5 +1,12 @@
 import random
 
+# Перебор
+def original_test(n):
+    for i in range(2, round(n/2)):
+        if n % i == 0:
+            return False
+    return True
+
 # Тест Ферма
 def fermat_test(n, iter_count=100):
     if n == 2:
