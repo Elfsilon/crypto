@@ -77,7 +77,6 @@ def is_perfect_square(x):
 # Решает диофантово уравнение ax+by=c
 def diophantine(a, b, c):
     check = c % gcd(a, b) == 0
-
     if check:
         _, xg, yg = gcd_extended(a, b)
         return xg * c, yg * c
@@ -94,6 +93,21 @@ def comparison(a, b, m):
         return x % m
 
     return math.nan
+
+def comparison_fermat(a,b,m):
+    d = gcd(a,m)
+    if d == 1:
+        x = str(((a**(euler(m)-1))*b) % m)
+    else:
+        if b % d == 0:
+            a1 = a//d
+            b1 = b//d
+            m1 = m//d
+            x1 = ((a1**(euler(m1)-1))*b1) % m1
+            x = str(m1)+"k + " + str(x1) + "(mod "+ str(m) + "), k ∈ {0,...," + str(d-1)+"}"
+        else:
+            x = "Решений нет"
+    return x
 
 
 # Возвращает список взаимнопростых с p чисел в промежутке [start, end)
@@ -125,3 +139,46 @@ def primitime_roots(m):
 
     empty = []
     return empty
+
+import numpy as np
+def chinise(list_b, list_m):
+    n = len(list_b)
+
+    # Проверка
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                if gcd(list_m[i], list_m[j]) != 1:
+                    print("Нет решений")
+                    return math.nan
+
+    Module = np.prod(list_m)
+    Ms = []
+    M_inv = []
+    
+    for i in range(n):
+        M = 1
+        for j in range(n):
+            if i != j:
+                M *= list_m[j]
+        M_ = comparison(M, 1, list_m[i])
+
+        Ms.append(M)
+        M_inv.append(M_)
+
+    x = 0
+    for i in range(n):
+        x += Ms[i] * M_inv[i] * list_b[i]
+    x %= Module
+
+    print(f"M = {M}")
+    print(f"Ms = {Ms}")
+    print(f"M inversions = {M_inv}")
+    print(f"x = {x}")
+    print()
+
+    return x
+
+chinise([2, 15, 5], [5, 17, 12])
+chinise([8, 13, 4], [6, 35, 11])
+chinise([8, 13, 4], [5, 35, 11])

@@ -113,3 +113,70 @@ def gcd(a, b):
         b1 = r
     
     return supposed_gcd
+
+# Проверка на приводимость
+def is_privodim(polynom):
+    d = int("0b" + polynom, 2)
+    for i in range(2, d):
+        if div(polynom, bin(i)[2:])[1] == "0":
+            return False
+
+    return True
+
+# Проверка на примитивность
+def is_primitive(polynom):
+    pow = len(polynom) - 1
+    m = 2 ** pow - 1
+
+    lst = generate_polynom(pow, m) 
+    if div(lst[len(lst) - 1], polynom)[1] == "0":
+        for i in range(0, len(lst)-1):
+            d, m = div(lst[i], polynom)
+            print(lst[i] + "  " + polynom + "  " + d + "  " +  m)
+            if m == "0":
+                return False
+        return True
+
+    return False
+
+# Хелпер
+def generate_polynom(n, m):
+    lst = list()
+    for p in range(n,m):
+        new_pol = "1" + ''.join([ "0" for i in range (p) ]) + "1"
+        lst.append(new_pol)
+
+    return lst
+
+# примитивные корни для полинома в поле 
+# main_elem - образующий многочлен, m - поле
+# print(len(prim_root('1000011', 64)))
+def prim_root(main_elem, m):
+    d = int("0b" + main_elem, 2)
+    first_root = None
+    mod_list = None
+    for i in range(2, d):
+        x = i
+        mod_list = [bin(x)[2:]]
+        
+        # поиск остатков для корня i
+        for j in range(2, m):
+            x *= i
+            mod = div(bin(x)[2:], main_elem)[1]
+            mod_list.append(mod)
+            # остаток
+            if mod == "1" :
+                if j != m - 1:
+                    break
+                else:
+                    first_root = i
+        
+        if first_root:
+            break
+    
+    result = list()
+    for j in range(0, m-1):
+        if gcd_lab1(j+1,m-1) == 1:
+            result.append(mod_list[j])
+        
+    return result
