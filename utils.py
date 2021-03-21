@@ -1,4 +1,5 @@
 import math
+import random
 
 def gcd_core(a, b):
     if b == 0:
@@ -57,6 +58,9 @@ def primes(start, end):
             res.append(num)
     return res
 
+def gen_prime(start=2, end=2):
+    ps = primes(start, end)
+    return ps[random.randint(0, len(ps)-1)]
 
 # Возващает True, если n - простое
 def is_prime(n):
@@ -121,24 +125,32 @@ def relative_primes(p, start=1, end=1):
             res.append(i)
     return res
 
+def gen_relative_prime(p):
+    relative_with_p = relative_primes(p, 2, 0)
+    return relative_with_p[random.randint(0, len(relative_with_p)-1)]
+
 
 # Возвращает список первообразных корней по основанию m
 def primitime_roots(m):
     for r in range(2, m):
         for p in range(1, m):
-            val = math.pow(r, p) % m
+            val = (r ** p) % m
             if val == 1:
                 if p == m-1:
                     primes = relative_primes(m-1, 1, m-1)
                     res = []
                     for rp in primes:
-                        res.append(int(math.pow(r, rp) % m))
+                        res.append(int((r ** rp) % m))
                     return res
                 else:
                     break
 
     empty = []
     return empty
+
+def gen_primitive_root(p):
+    roots = primitime_roots(p)
+    return roots[random.randint(0, len(roots)-1)]
 
 import numpy as np
 def chinise(list_b, list_m):
@@ -179,6 +191,6 @@ def chinise(list_b, list_m):
 
     return x
 
-chinise([2, 15, 5], [5, 17, 12])
-chinise([8, 13, 4], [6, 35, 11])
-chinise([8, 13, 4], [5, 35, 11])
+# chinise([2, 15, 5], [5, 17, 12])
+# chinise([8, 13, 4], [6, 35, 11])
+# chinise([8, 13, 4], [5, 35, 11])
