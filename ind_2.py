@@ -1,4 +1,4 @@
-from prime_test import square_root_test
+from prime_test import miller_rabin_test
 
 def ind_2():
     with open('table_ind_1.txt', 'w') as File:
@@ -10,7 +10,7 @@ def ind_2():
                 header += f"{test_num} тест | "
         File.write(f"{header}\n")
 
-        for number in range(2, 100):
+        for number in range(2, 10000):
             row = ""
             if number < 10:
                 row += f"{number}         | "
@@ -32,7 +32,7 @@ def ind_2():
                 row += f"{number}"
 
             for iter_count in range(1, 101):
-                res = square_root_test(number, iter_count)
+                res = miller_rabin_test(number, iter_count)
                 if res:
                     row += "   +    | "
                 else:
