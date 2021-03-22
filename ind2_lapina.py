@@ -4,6 +4,7 @@ import utils
 import operator
 from functools import reduce
 
+# T(n) = sqrt(n) * log(n) -> P
 def original(n):
     for i in range(2, math.isqrt(n)):
         if n % i == 0:
@@ -12,6 +13,7 @@ def original(n):
 
 
 # Метод факторизации Полларда p-1
+# 2B + log(n) + 5 -> P
 def pollard_p_minus_one(n, B=5, M=13, a=2):
     if B < 1:
         raise Exception('B must be bigger than 1')
@@ -47,6 +49,7 @@ def pollard_p_minus_one(n, B=5, M=13, a=2):
 
 
 # Метод факторизации Полларда PO (Rho)
+# n ** 1/4 -> P
 def pollard_po(n, func=lambda x: x**2 + 1):
     x = random.randint(1, n-2)
     y = 1
@@ -82,6 +85,7 @@ def pollard_po(n, func=lambda x: x**2 + 1):
 
 
 # Метод факторизации Ферма
+
 def fermat(n):
     s = round(math.sqrt(n) + 0.5)
 
