@@ -60,7 +60,7 @@ def primes(start, end):
 
 def gen_prime(start=2, end=2):
     ps = primes(start, end)
-    return ps[random.randint(0, len(ps)-1)]    width: 100%;
+    return ps[random.randint(0, len(ps)-1)]
 
 
 # Возващает True, если n - простое
@@ -195,3 +195,4 @@ def chinise(list_b, list_m):
 # chinise([2, 15, 5], [5, 17, 12])
 # chinise([8, 13, 4], [6, 35, 11])
 # chinise([8, 13, 4], [5, 35, 11])
+print("comp", comparison_fermat(3, 1, 2941))
