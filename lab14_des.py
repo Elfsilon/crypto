@@ -1,5 +1,11 @@
 # -- Permutation tables and constants -------------------------------------
 
+MODE = {
+    'ECB': 'ECB', # Electric Codebook
+    'CBC': 'CBC', # Cipher Block Chaining
+    'CFB': 'CFB', # Cipher Feedback
+}
+
 # Subkeys generation tables
 PC_1 = [
     57,  49,  41,  33,  25,  17,   9,
@@ -271,6 +277,7 @@ def create_subkeys(hex_key):
 def xor_blocks(block1, block2):
     result = []
     for i in range(len(block1)):
+        # print("XOR:", int(block1[i]), int(block2[i]), int(block1[i]) == int(block2[i]))
         if int(block1[i]) == int(block2[i]):
             result.append(0)
         else:
@@ -291,7 +298,7 @@ def SBox(index, block):
     return sbox_res
 
 
-def feistel_func(block, subkey, reverse=False):
+def feistel_func(block, subkey):
     expanded = apply_permutation_table(E, block)
     xored = xor_blocks(expanded, subkey)
 
@@ -299,11 +306,7 @@ def feistel_func(block, subkey, reverse=False):
     start = 0
     end = 6
 
-    order = range(8)
-    if reverse:
-        order = reversed(range(8))
-
-    for i in order:
+    for i in range(8):
         val = SBox(i, xored[start:end])
         for v in val:
             S_res.append(v)
@@ -315,69 +318,135 @@ def feistel_func(block, subkey, reverse=False):
     return S_Permutated
 
 
+def encryption_rounds(R0, L0, subkeys, log):
+    if log:
+        print("\nEncryption rounds:")
+
+    R = R0.copy()
+    L = L0.copy()
+    Ln = [] 
+    Rn = []
+    for i in range(0, 16):
+        Ln = R.copy()
+        Rn = xor_blocks(L, feistel_func(R, subkeys[i]))
+        L = Ln.copy()
+        R = Rn.copy()
+
+        if log:
+            print_bytes(Ln, f"L{i}")
+            print_bytes(Rn, f"R{i}")
+
+    return Rn + Ln
+
+
+def encrypt_block(M, subkeys, log):
+    permutated_M = apply_permutation_table(IP, M)
+
+    L = permutated_M[:32] # Left perm message part
+    R = permutated_M[32:] # Right perm message part
+
+    Cipher = encryption_rounds(R, L, subkeys, log=log)
+    PCipher = apply_permutation_table(IP_INV, Cipher)
+
+    cipher_hex = bytelist_to_hexdecimal(PCipher)[2:]
+
+    if log:
+        print("\nPreprocessed message length:", len(M))
+        print_bytes(M, "Preprocessed message")
+        print("\nPermutated M by IP length:", len(permutated_M))
+        print_bytes(permutated_M, "Permutated M by IP:")
+        print_bytes(L, "\nL")
+        print_bytes(R, "R")
+        print()
+        print_bytes(Cipher, '\nCipher')
+        print_bytes(PCipher, "Permutated cipher")
+
+    return cipher_hex, PCipher
+
+
+def decrypt_block(block, subkeys, log):
+    # Apply inverse to IP_INV (IP) table
+    cipher = apply_permutation_table(IP, block)
+    # Start decryption
+    Rn, Ln = cipher[:32], cipher[32:]
+
+    permutated_M = decryption_rounds(Rn, Ln, subkeys, log=log)
+    M = apply_permutation_table(IP_INV, permutated_M)
+
+    if log:
+        print("\nBlock lenght", len(block))
+        print_bytes(block, 'Block')
+        print_bytes(cipher, "Cipher")
+        print()
+        print_bytes(Ln, "Ln")
+        print_bytes(Rn, "Rn")
+        print_bytes(permutated_M, f"\nPermutated binary message")
+        print_bytes(M, "Decrypted binary message")
+
+    return M
+        
+
+def decryption_rounds(R0, L0, subkeys, log):
+    if log:
+        print("\nDecryption rounds:")
+
+    Ln = L0.copy()
+    Rn = R0.copy()
+    L = []
+    R = []
+    for i in reversed(range(0, 16)):
+        R = Ln.copy()
+        L = xor_blocks(Rn, feistel_func(Ln, subkeys[i]))
+        Ln = L.copy()
+        Rn = R.copy()
+
+        if log:
+            print_bytes(L, f"L{i}")
+            print_bytes(R, f"R{i}")
+
+    return L + R
+
+
 # -- Wrappers
-def DES_encrypt(mes, subkeys):
+def DES_encrypt(mes, subkeys, mode='ECB', C0=None):
     print("------------FIRST BLOCK ENCRYPTION------------\n")
+    print('Mode:', mode)
 
     common_cipher = []
     binary_text_blocks = text_to_binary_blocks(mes)
-    info_flag = True
+    log = True # For logging only one block
+    M_prev = None
+    if mode == MODE['CBC'] or mode == MODE['CFB']:
+        M_prev = hex_to_bytelist(C0)
+
     for M in binary_text_blocks:
-        permutated_M = apply_permutation_table(IP, M)
+        if mode == MODE['ECB']:
+            cipher_hex, _ = encrypt_block(M, subkeys, log=log)
+            common_cipher.append(cipher_hex)
 
-        L = permutated_M[:32] # Left perm message part
-        R = permutated_M[32:] # Right perm message part
+        elif mode == MODE['CBC']:
+            block = xor_blocks(M, M_prev)
+            cipher_hex, cipher_bin = encrypt_block(block, subkeys, log=log)
+            M_prev = cipher_bin
+            common_cipher.append(cipher_hex)
 
-        if info_flag:
-            print("Preprocessed message length:", len(M))
-            print_bytes(M, "Preprocessed message")
+        elif mode == MODE['CFB']:
+            _, D = encrypt_block(M_prev, subkeys, log=log)
+            print_bytes(D, 'D')
+            cipher_bin = xor_blocks(M, D)
+            cipher_hex = bytelist_to_hexdecimal(cipher_bin)[2:]
+            common_cipher.append(cipher_hex)
+            M_prev = cipher_bin
+        
+        log = False
 
-            print("\nPermutated M by IP length:", len(permutated_M))
-            print_bytes(permutated_M, "Permutated M by IP:")
-
-            print_bytes(L, "\nL")
-            print_bytes(R, "R")
-            print()
-
-        # Encryption rounds
-        L_I = [] 
-        R_I = []
-        for i in range(0, 16):
-            L_I = R.copy()
-            R_I = xor_blocks(L, feistel_func(R, subkeys[i]))
-            L = L_I.copy()
-            R = R_I.copy()
-
-            # INFO
-            if info_flag:
-                print_bytes(L_I, f"L{i}")
-                print_bytes(R_I, f"R{i}")
-
-        Cipher = R_I + L_I
-        PCipher = apply_permutation_table(IP_INV, Cipher)
-
-        if info_flag:
-            print_bytes(Cipher, '\nCipher')
-            print_bytes(L_I, 'Ln')
-            print_bytes(R_I, 'Rn')
-            print_bytes(PCipher, "Permutated cipher")
-
-        cipher_hex = bytelist_to_hexdecimal(PCipher)[2:]
-        print_bytes(PCipher)
-
-        common_cipher.append(cipher_hex)
-        info_flag = False
-
-    for i in common_cipher:
-        print(i, len(i))
-
-    joined_cipher = "".join(common_cipher)
+    joined_cipher = "".join(common_cipher) # Join ['hex', 'hex', ...] to one string
     print(f"\nEncrypted message (hex): {joined_cipher}")
 
     return joined_cipher
 
 
-def DES_decrypt(enc, subkeys):
+def DES_decrypt(enc, subkeys, mode='ECB', C0=None):
     print("\n------------FIRST BLOCK DECRYPTION------------\n")
     print(f"Encrypted message length:", len(enc), end='\n\n')
 
@@ -389,48 +458,30 @@ def DES_decrypt(enc, subkeys):
         print(enc[i:i+step], len(enc[i:i+step]))
 
     deciphered_binary_blocks = []
-    info_flag = True
+    M_prev = hex_to_bytelist(C0)
+    log = True
+
     for hex_block in hex_list:
-        block = hex_to_bytelist(hex_block)
+        if mode == MODE['ECB']:
+            block = hex_to_bytelist(hex_block)
+            M = decrypt_block(block, subkeys, log=log)
+            deciphered_binary_blocks.append(M)
 
-        # Apply inverse to IP_INV (IP) table
-        cipher = apply_permutation_table(IP, block)
+        elif mode == MODE['CBC']:
+            block = hex_to_bytelist(hex_block)
+            D = decrypt_block(block, subkeys, log=log)
+            M = xor_blocks(D, M_prev)
+            deciphered_binary_blocks.append(M)
+            M_prev = block.copy()
 
-        # Start decryption
-        Rn, Ln = cipher[:32], cipher[32:]
+        elif mode == MODE['CFB']:
+            _, D = encrypt_block(M_prev, subkeys, log=log)
+            block = hex_to_bytelist(hex_block)
+            M = xor_blocks(block, D)
+            deciphered_binary_blocks.append(M)
+            M_prev = block
 
-        if info_flag:
-            print("\nBlock:", block, "length of", len(block))
-            print_bytes(cipher, "Cipher")
-            print()
-            print_bytes(Ln, "Ln")
-            print_bytes(Rn, "Rn")
-            print("\nDecryption rounds:")
-
-        L = []
-        R = []
-        for i in reversed(range(0, 16)):
-            R = Ln.copy()
-            L = xor_blocks(Rn, feistel_func(Ln, subkeys[i]))
-            Ln = L.copy()
-            Rn = R.copy()
-
-            if info_flag:
-                print_bytes(L, f"L{i}")
-                print_bytes(R, f"R{i}")
-
-
-        permutated_M = L + R
-        M = apply_permutation_table(IP_INV, permutated_M)
-
-        if info_flag:
-            print_bytes(L, f"\nL")
-            print_bytes(R, f"R")
-            print_bytes(permutated_M, f"Permutated binary message")
-            print_bytes(M, "\nDecrypted binary message")
-
-        deciphered_binary_blocks.append(M)
-        info_flag = False
+        log = False
 
     deciphered = "".join(list(map(lambda x: bytelist_to_string(x), deciphered_binary_blocks)))
     binary_letters = [deciphered[i:i+11] for i in range(0, len(deciphered), 11)]
@@ -441,14 +492,34 @@ def DES_decrypt(enc, subkeys):
     return message
     
    
-
-    
-
-# -- Usage -------------------------------------    
+# -------------------- Usage ----------------------    
 
 key = "0E329232EA6D0D73"
 message = "пиздецнахуйблязаебисьсук"
+C0 = '0E329232EA6D0D73'
+mode = MODE['CFB']
 
 subkeys = create_subkeys(key)
-encrypted = DES_encrypt(message, subkeys)
-decrypted = DES_decrypt(encrypted, subkeys)
+encrypted = DES_encrypt(message, subkeys, mode=mode, C0=C0)
+decrypted = DES_decrypt(encrypted, subkeys, mode=mode, C0=C0)
+
+# Учебник
+# print('Task 1:')
+# S_indexes = [2, 3, 6, 1]
+# addresses = [[1, 1, 0, 1, 1, 1], [0, 0, 1, 1, 0, 0], [0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1]]
+# for i in range(len(S_indexes)):
+#     S_bin = SBox(S_indexes[i], addresses[i])
+#     S_dec = bytelist_to_decimal(S_bin)
+#     print("Sbox", i+1, ":", bytelist_to_string(S_bin), S_dec)
+
+# print('\nTask 2:')
+# for i in range(8):
+#     S_bin = SBox(i, [0, 0, 0, 0, 0, 0])
+#     S_dec = bytelist_to_decimal(S_bin)
+#     print("Sbox", i+1, ":", bytelist_to_string(S_bin), S_dec)
+
+# print('\nTask 3:')
+# for i in range(8):
+#     S_bin = SBox(i, [1, 1, 1, 1, 1, 1])
+#     S_dec = bytelist_to_decimal(S_bin)
+#     print("Sbox", i+1, ":", bytelist_to_string(S_bin), S_dec)
